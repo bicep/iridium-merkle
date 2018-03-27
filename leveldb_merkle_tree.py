@@ -37,6 +37,17 @@ class LeveldbMerkleTree(object):
             wb.put('stats-tree_size', str(cur_tree_size + 1))
         return cur_tree_size
 
+    def extend(self, new_leaves):
+        """Extend this tree with new_leaves on the end."""
+        cur_tree_size = self.tree_size
+        leaf_hashes = [self.__hasher.hash_leaf(l) for l in new_leaves]
+        with self.__db.write_batch() as wb:
+            for lf in leaf_hashes:
+                wb.put('leaves-' + struct.pack(">I", cur_tree_size), lf)
+                wb.put('index-' + lf, struct.pack(">I", cur_tree_size))
+                cur_tree_size += 1
+            wb.put('stats-tree_size', str(cur_tree_size))
+
     def get_leaf_index(self, leaf_hash):
         """Returns the index of the leaf hash, or -1 if not present."""
         raw_index = self.__index_db.get(leaf_hash)
