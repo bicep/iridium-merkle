@@ -9,25 +9,6 @@ import struct
 
 import merkle
 
-def count_bits_set(i):
-    # from https://wiki.python.org/moin/BitManipulation
-    count = 0
-    while i:
-        i &= i - 1
-        count += 1
-    return count
-
-def _down_to_power_of_two(n):
-    """Returns the power-of-2 closest to n."""
-    if n < 2:
-        raise ValueError("N should be >= 2: %d" % n)
-    log_n = math.log(n, 2)
-    p = int(log_n)
-    # If n is exactly power of 2 then 2**p would be n, decrease p by 1.
-    if p == log_n:
-        p -= 1
-    return 2**p
-
 class LeveldbMerkleTree(object):
     """LevelDB Merkle Tree representation."""
 
