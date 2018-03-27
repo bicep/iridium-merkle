@@ -12,9 +12,9 @@ import merkle
 class LeveldbMerkleTree(object):
     """LevelDB Merkle Tree representation."""
 
-    def __init__(self, db="./merkle_db", hasher=merkle.TreeHasher()):
+    def __init__(self, db="./merkle_db"):
         """Start with the LevelDB database of leaves and hasher provided."""
-        self.__hasher = hasher
+        self.__hasher = IncrementalTreeHasher()
         self.__db = plyvel.DB(db, create_if_missing=True)
         self.__leaves_db = self.__db.prefixed_db('leaves-')
         self.__stats_db = self.__db.prefixed_db('stats-')
