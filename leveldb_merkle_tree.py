@@ -32,9 +32,9 @@ class LeveldbMerkleTree(object):
         cur_tree_size = self.tree_size
         leaf_hash = self.__hasher.hash_leaf(leaf)
         with self.__db.write_batch() as wb:
-            self.__db.put('leaves-' + struct.pack(">I", cur_tree_size), leaf_hash)
-            self.__db.put('index-' + leaf_hash, struct.pack(">I", cur_tree_size))
-            self.__db.put('stats-tree_size', str(cur_tree_size + 1))
+            wb.put('leaves-' + struct.pack(">I", cur_tree_size), leaf_hash)
+            wb.put('index-' + leaf_hash, struct.pack(">I", cur_tree_size))
+            wb.put('stats-tree_size', str(cur_tree_size + 1))
         return cur_tree_size
 
     def get_leaf_index(self, leaf_hash):
