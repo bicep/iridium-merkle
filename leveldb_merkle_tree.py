@@ -9,6 +9,14 @@ import struct
 
 import merkle
 
+def encode_int(n):
+    """Encode an integer into a big-endian bytestring."""
+    return struct.pack(">I", n)
+
+def decode_int(n):
+    """Decode a big-endian bytestring into an integer."""
+    return stuct.unpack(">I", n)[0]
+
 class LeveldbMerkleTree(object):
     """LevelDB Merkle Tree representation."""
 
@@ -32,8 +40,8 @@ class LeveldbMerkleTree(object):
         cur_tree_size = self.tree_size
         leaf_hash = self.__hasher.hash_leaf(leaf)
         with self.__db.write_batch() as wb:
-            wb.put('leaves-' + struct.pack(">I", cur_tree_size), leaf_hash)
-            wb.put('index-' + leaf_hash, struct.pack(">I", cur_tree_size))
+            wb.put('leaves-' + encode_int(cur_tree_size), leaf_hash)
+            wb.put('index-' + leaf_hash, encode_int(cur_tree_size))
             wb.put('stats-tree_size', str(cur_tree_size + 1))
         return cur_tree_size
 
@@ -43,8 +51,8 @@ class LeveldbMerkleTree(object):
         leaf_hashes = [self.__hasher.hash_leaf(l) for l in new_leaves]
         with self.__db.write_batch() as wb:
             for lf in leaf_hashes:
-                wb.put('leaves-' + struct.pack(">I", cur_tree_size), lf)
-                wb.put('index-' + lf, struct.pack(">I", cur_tree_size))
+                wb.put('leaves-' + encode_int(cur_tree_size), lf)
+                wb.put('index-' + lf, encode_int(cur_tree_size))
                 cur_tree_size += 1
             wb.put('stats-tree_size', str(cur_tree_size))
 
@@ -52,7 +60,7 @@ class LeveldbMerkleTree(object):
         """Returns the index of the leaf hash, or -1 if not present."""
         raw_index = self.__index_db.get(leaf_hash)
         if raw_index:
-            return struct.unpack(">I", self.__index_db.get(leaf_hash))[0]
+            return decode_int(raw_index)
         else:
             return -1
 
@@ -62,7 +70,7 @@ class LeveldbMerkleTree(object):
             tree_size = self.tree_size
         if tree_size > self.tree_size:
             raise ValueError("Specified size beyond known tree: %d" % tree_size)
-        leaves = [l for l in self.__leaves_db.iterator(start=struct.pack(">I", 0), stop=struct.pack(">I", tree_size), include_key=False)]
+        leaves = [l for l in self.__leaves_db.iterator(start=encode_int(0), stop=encode_int(tree_size), include_key=False)]
         return self.__hasher.hash_full_tree(leaves)
 
     def __repr__(self):
