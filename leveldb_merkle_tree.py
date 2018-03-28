@@ -9,14 +9,6 @@ import struct
 
 import merkle
 
-def count_bits_set(i):
-    # from https://wiki.python.org/moin/BitManipulation
-    count = 0
-    while i:
-        i &= i - 1
-        count += 1
-    return count
-
 def _down_to_power_of_two(n):
     """Returns the power-of-2 closest to n."""
     if n < 2:
