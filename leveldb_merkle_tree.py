@@ -69,6 +69,11 @@ class LeveldbMerkleTree(object):
     def stats_db_prefix(self):
         return self.__stats_db_prefix
 
+    def get_leaves(self, start=0, stop=None):
+        if stop is None:
+            stop = self.tree_size
+        return [l for l in self.__leaves_db.iterator(start=encode_int(start), stop=encode_int(stop), include_key=False)]
+
     def add_leaf(self, leaf):
         """Adds |leaf| to the tree, returning the index of the entry."""
         cur_tree_size = self.tree_size
@@ -104,8 +109,7 @@ class LeveldbMerkleTree(object):
             tree_size = self.tree_size
         if tree_size > self.tree_size:
             raise ValueError("Specified size beyond known tree: %d" % tree_size)
-        leaves = [l for l in self.__leaves_db.iterator(start=encode_int(0), stop=encode_int(tree_size), include_key=False)]
-        return self.__hasher.hash_full_tree(leaves)
+        return self.__hasher.hash_full_tree(self.get_leaves(stop=tree_size))
 
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.__hasher)
