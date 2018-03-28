@@ -111,6 +111,44 @@ class LeveldbMerkleTree(object):
             raise ValueError("Specified size beyond known tree: %d" % tree_size)
         return self.__hasher.hash_full_tree(self.get_leaves(stop=tree_size))
 
+    def _calculate_subproof(self, m, leaves, complete_subtree):
+        """SUBPROOF, see RFC6962 section 2.1.2."""
+        n = len(leaves)
+        if m == n or n == 1:
+            if complete_subtree:
+                return []
+            else:
+                return [self.__hasher.hash_full_tree(leaves)]
+
+        k = _down_to_power_of_two(n)
+        if m <= k:
+            node = self.__hasher.hash_full_tree(leaves[k:n])
+            res = self._calculate_subproof(m, leaves[0:k], complete_subtree)
+        else:
+            # m > k
+            node = self.__hasher.hash_full_tree(leaves[0:k])
+            res = self._calculate_subproof(m - k, leaves[k:n], False)
+        res.append(node)
+        return res
+
+    def get_consistency_proof(self, tree_size_1, tree_size_2=None):
+        """Returns a consistency proof between two snapshots of the tree."""
+        if tree_size_2 is None:
+            tree_size_2 = self.tree_size
+
+        if tree_size_1 > self.tree_size or tree_size_2 > self.tree_size:
+            raise ValueError("Requested proof for sizes beyond current tree:"
+                    " current tree: %d tree_size_1 %d tree_size_2 %d" % (
+                        self.tree_size, tree_size_1, tree_size_2))
+
+        if tree_size_1 > tree_size_2:
+            raise ValueError("tree_size_1 must be less than tree_size_2")
+        if tree_size_1 == tree_size_2 or tree_size_1 == 0:
+            return []
+
+        return self._calculate_subproof(
+                tree_size_1, self.get_leaves(stop=tree_size_2), True)
+
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.__hasher)
 
