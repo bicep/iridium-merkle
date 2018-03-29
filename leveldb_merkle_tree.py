@@ -62,6 +62,7 @@ class LeveldbMerkleTree(object):
         return self.__stats_db_prefix
 
     def get_leaves(self, start=0, stop=None):
+        """Get leaves from the range [start, stop)."""
         if stop is None:
             stop = self.tree_size
         return [l for l in self.__leaves_db.iterator(start=encode_int(start), stop=encode_int(stop), include_key=False)]
