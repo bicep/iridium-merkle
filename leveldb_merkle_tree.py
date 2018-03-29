@@ -142,6 +142,38 @@ class LeveldbMerkleTree(object):
         return self._calculate_subproof(
                 tree_size_1, self.get_leaves(stop=tree_size_2), True)
 
+    def _calculate_inclusion_proof(self, leaves, leaf_index):
+        """Merkle audit path, RFC6962 Section 2.1.1."""
+        n = len(leaves)
+        if n == 0 or n == 1:
+            return []
+
+        k = _down_to_power_of_two(n)
+        m = leaf_index
+        if m < k:
+            mth_k_to_n = self.__hasher.hash_full_tree(leaves[k:n])
+            path = self._calculate_inclusion_proof(leaves[0:k], m)
+            path.append(mth_k_to_n)
+        else:
+            mth_0_to_k = self.__hasher.hash_full_tree(leaves[0:k])
+            path = self._calculate_inclusion_proof(leaves[k:n], m - k)
+            path.append(mth_0_to_k)
+        return path
+
+    def get_inclusion_proof(self, leaf_index, tree_size=None):
+        """Returns an inclusion proof for leaf at |leaf_index|."""
+        if tree_size is None:
+            tree_size = self.tree_size
+        if tree_size > self.tree_size:
+            raise ValueError("Specified tree size is beyond known tree: %d" %
+                    tree_size)
+        if leaf_index >= self.tree_size:
+            raise ValueError("Requested proof for leaf beyond tree size: %d" %
+                    leaf_index)
+
+        return self._calculate_inclusion_proof(
+                self.get_leaves(stop=tree_size), leaf_index)
+
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.__hasher)
 
