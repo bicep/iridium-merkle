@@ -50,6 +50,10 @@ class LeveldbMerkleTree(object):
         return int(self.__stats_db.get('tree_size', default='0'))
 
     @property
+    def sha256_root_hash(self):
+        return self.get_root_hash()
+
+    @property
     def leaves_db_prefix(self):
         return self.__leaves_db_prefix
 
