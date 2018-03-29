@@ -27,4 +27,11 @@ const_proof = LMT.get_consistency_proof(20000)
 print [h.encode('hex') for h in const_proof]
 print MV.verify_tree_consistency(20000, 65536, IMT.get_root_hash(20000), LMT.get_root_hash(), const_proof)
 
+# check that inclusion proof is working and identical
+leaf_hash = LMT.get_leaf(20000)
+incl_proof = LMT.get_inclusion_proof(20000)
+print [h.encode('hex') for h in incl_proof]
+print IMT.get_inclusion_proof(20000, 65536) == incl_proof
+print MV.verify_leaf_hash_inclusion(leaf_hash, 20000, incl_proof, LMT)
+
 LMT.close()
