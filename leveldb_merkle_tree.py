@@ -65,6 +65,10 @@ class LeveldbMerkleTree(object):
     def stats_db_prefix(self):
         return self.__stats_db_prefix
 
+    def get_leaf(self, leaf_index):
+        """Get the leaf at leaf_index."""
+        return self.__leaves_db.get(encode_int(leaf_index))
+
     def get_leaves(self, start=0, stop=None):
         """Get leaves from the range [start, stop)."""
         if stop is None:
