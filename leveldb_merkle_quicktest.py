@@ -20,9 +20,8 @@ IMT = in_memory_merkle_tree.InMemoryMerkleTree(LEAVES)
 print "Root hash in InMemoryMerkleTree: " + IMT.get_root_hash().encode('hex')
 
 os.system("rm -rf ./merkle_db")
-LMT = leveldb_merkle_tree.LeveldbMerkleTree()
-for l in LEAVES:
-    LMT.add_leaf(l)
+LMT = leveldb_merkle_tree.LeveldbMerkleTree(LEAVES)
+
 # LMT.extend(LEAVES)
 print "Root hash in LeveldbMerkleTree: " + LMT.get_root_hash().encode('hex')
 
