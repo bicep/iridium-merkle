@@ -31,7 +31,7 @@ def decode_int(n):
 class LeveldbMerkleTree(object):
     """LevelDB Merkle Tree representation."""
 
-    def __init__(self, leaves, db="./merkle_db", leaves_db_prefix='leaves-', index_db_prefix='index-', stats_db_prefix='stats-'):
+    def __init__(self, leaves=None, db="./merkle_db", leaves_db_prefix='leaves-', index_db_prefix='index-', stats_db_prefix='stats-'):
         """Start with the LevelDB database of leaves provided."""
         self.__hasher = IncrementalTreeHasher()
         self.__db = plyvel.DB(db, create_if_missing=True)
@@ -41,7 +41,8 @@ class LeveldbMerkleTree(object):
         self.__leaves_db = self.__db.prefixed_db(leaves_db_prefix)
         self.__index_db = self.__db.prefixed_db(index_db_prefix)
         self.__stats_db = self.__db.prefixed_db(stats_db_prefix)
-        self.add_leaf_from_array(leaves)
+        if leaves is not None:
+            self.extend(leaves)
 
     def close(self):
         self.__db.close()
@@ -85,11 +86,6 @@ class LeveldbMerkleTree(object):
             wb.put(self.__index_db_prefix + leaf_hash, encode_int(cur_tree_size))
             wb.put(self.__stats_db_prefix + 'tree_size', str(cur_tree_size + 1))
         return cur_tree_size
-
-    def add_leaf_from_array(self, leaf_array):
-        """Adds |leaf array| to the tree"""
-        for l in leaf_array:
-            self.add_leaf(l)
 
     def extend(self, new_leaves):
         """Extend this tree with new_leaves on the end."""
