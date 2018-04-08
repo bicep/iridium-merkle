@@ -31,7 +31,7 @@ def decode_int(n):
 class LeveldbMerkleTree(object):
     """LevelDB Merkle Tree representation."""
 
-    def __init__(self, db="./merkle_db", leaves_db_prefix='leaves-', index_db_prefix='index-', stats_db_prefix='stats-'):
+    def __init__(self, leaves=None, db="./merkle_db", leaves_db_prefix='leaves-', index_db_prefix='index-', stats_db_prefix='stats-'):
         """Start with the LevelDB database of leaves provided."""
         self.__hasher = IncrementalTreeHasher()
         self.__db = plyvel.DB(db, create_if_missing=True)
@@ -41,6 +41,8 @@ class LeveldbMerkleTree(object):
         self.__leaves_db = self.__db.prefixed_db(leaves_db_prefix)
         self.__index_db = self.__db.prefixed_db(index_db_prefix)
         self.__stats_db = self.__db.prefixed_db(stats_db_prefix)
+        if leaves is not None:
+            self.extend(leaves)
 
     def close(self):
         self.__db.close()
