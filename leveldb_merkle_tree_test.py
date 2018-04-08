@@ -4,7 +4,8 @@
 
 from collections import namedtuple
 
-import os
+import shutil
+import tempfile
 import unittest
 
 import leveldb_merkle_tree
@@ -79,12 +80,11 @@ PRECOMPUTED_PROOF_TEST_VECTORS = [
 class LeveldbMerkleTreeTest(unittest.TestCase):
     """Tests for LeveldbMerkleTree."""
 
-    @classmethod
-    def setUpClass(cls):
-        os.system("rm -rf ./merkle_db")
+    def setUp(self):
+        self.db = tempfile.mkdtemp()
 
     def tearDown(self):
-        os.system("rm -rf ./merkle_db")
+        shutil.rmtree(self.db)
  
     def test_tree_incremental_root_hash(self):
         """Test root hash calculation.
@@ -92,7 +92,7 @@ class LeveldbMerkleTreeTest(unittest.TestCase):
         Test that root hash is calculated correctly when leaves are added
         incrementally.
         """
-        tree = leveldb_merkle_tree.LeveldbMerkleTree([])
+        tree = leveldb_merkle_tree.LeveldbMerkleTree(leaves=[], db=self.db)
         hasher = merkle.TreeHasher()
         for i in range(len(TEST_VECTOR_DATA)):
             tree.add_leaf(TEST_VECTOR_DATA[i])
@@ -107,7 +107,7 @@ class LeveldbMerkleTreeTest(unittest.TestCase):
         Test that root hash is calculated correctly when all leaves are added
         at once.
         """
-        tree = leveldb_merkle_tree.LeveldbMerkleTree(TEST_VECTOR_DATA)
+        tree = leveldb_merkle_tree.LeveldbMerkleTree(leaves=TEST_VECTOR_DATA, db=self.db)
         hasher = merkle.TreeHasher()
         for i in range(len(TEST_VECTOR_DATA)):
             self.assertEqual(
@@ -121,7 +121,7 @@ class LeveldbMerkleTreeTest(unittest.TestCase):
         Test inclusion proof generation correctness test for known-good
         proofs.
         """
-        tree = leveldb_merkle_tree.LeveldbMerkleTree(TEST_VECTOR_DATA)
+        tree = leveldb_merkle_tree.LeveldbMerkleTree(leaves=TEST_VECTOR_DATA, db=self.db)
         verifier = merkle.MerkleVerifier()
         for v in PRECOMPUTED_PATH_TEST_VECTORS:
             audit_path = tree.get_inclusion_proof(v.leaf, v.tree_size_snapshot)
@@ -150,7 +150,7 @@ class LeveldbMerkleTreeTest(unittest.TestCase):
             leaves.append(chr(i) * 32)
             leaf_hashes.append(hasher.hash_leaf(leaves[-1]))
 
-        tree = leveldb_merkle_tree.LeveldbMerkleTree(leaves)
+        tree = leveldb_merkle_tree.LeveldbMerkleTree(leaves=leaves, db=self.db)
         verifier = merkle.MerkleVerifier()
 
         for i in range(1, tree.tree_size):
@@ -167,7 +167,7 @@ class LeveldbMerkleTreeTest(unittest.TestCase):
         Test Consistency proof generation correctness test for known-good
         proofs.
         """
-        tree = leveldb_merkle_tree.LeveldbMerkleTree(TEST_VECTOR_DATA)
+        tree = leveldb_merkle_tree.LeveldbMerkleTree(leaves=TEST_VECTOR_DATA, db=self.db)
         for v in PRECOMPUTED_PROOF_TEST_VECTORS:
             consistency_proof = tree.get_consistency_proof(
                     v.snapshot_1, v.snapshot_2)
@@ -183,7 +183,7 @@ class LeveldbMerkleTreeTest(unittest.TestCase):
         for i in range(128):
             leaves.append(chr(i) * 32)
 
-        tree = leveldb_merkle_tree.LeveldbMerkleTree(leaves)
+        tree = leveldb_merkle_tree.LeveldbMerkleTree(leaves=leaves, db=self.db)
         verifier = merkle.MerkleVerifier()
 
         for i in range(1, tree.tree_size):
@@ -200,7 +200,7 @@ class LeveldbMerkleTreeTest(unittest.TestCase):
         Test that an assertion is raised for invalid tree size passed
         into get_root_hash.
         """
-        tree = leveldb_merkle_tree.LeveldbMerkleTree(TEST_VECTOR_DATA)
+        tree = leveldb_merkle_tree.LeveldbMerkleTree(leaves=TEST_VECTOR_DATA, db=self.db)
         self.assertRaises(ValueError, tree.get_root_hash, tree.tree_size + 3)
         tree.close()
 
@@ -210,7 +210,7 @@ class LeveldbMerkleTreeTest(unittest.TestCase):
         Test that an assertion is raised for invalid tree sizes or invalid
         leaf indices are passed into get_inclusion_proof.
         """
-        tree = leveldb_merkle_tree.LeveldbMerkleTree(TEST_VECTOR_DATA)
+        tree = leveldb_merkle_tree.LeveldbMerkleTree(leaves=TEST_VECTOR_DATA, db=self.db)
         n = tree.tree_size
         # Tree size too large
         self.assertRaises(ValueError, tree.get_inclusion_proof, 0, n + 3)
@@ -225,7 +225,7 @@ class LeveldbMerkleTreeTest(unittest.TestCase):
         Test that an assertion is raised for invalid tree sizes passed
         into get_consistency_proof.
         """
-        tree = leveldb_merkle_tree.LeveldbMerkleTree(TEST_VECTOR_DATA)
+        tree = leveldb_merkle_tree.LeveldbMerkleTree(leaves=TEST_VECTOR_DATA, db=self.db)
         n = tree.tree_size
         # 2nd tree size too large
         self.assertRaises(ValueError, tree.get_consistency_proof, 1, n + 3)

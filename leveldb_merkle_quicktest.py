@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 
 import os
+import shutil
 import random
 
 import merkle
@@ -16,11 +17,11 @@ def encode_byte_list(l):
 
 LEAVES = [os.urandom(LEAF_SIZE) for i in xrange(NUM_LEAVES)]
 
-IMT = in_memory_merkle_tree.InMemoryMerkleTree(LEAVES)
+IMT = in_memory_merkle_tree.InMemoryMerkleTree(leaves=LEAVES)
 print "Root hash in InMemoryMerkleTree: " + IMT.get_root_hash().encode('hex')
 
-os.system("rm -rf ./merkle_db")
-LMT = leveldb_merkle_tree.LeveldbMerkleTree(LEAVES)
+shutil.rmtree("./merkle_db", ignore_errors=True)
+LMT = leveldb_merkle_tree.LeveldbMerkleTree(leaves=LEAVES)
 
 # LMT.extend(LEAVES)
 print "Root hash in LeveldbMerkleTree: " + LMT.get_root_hash().encode('hex')
